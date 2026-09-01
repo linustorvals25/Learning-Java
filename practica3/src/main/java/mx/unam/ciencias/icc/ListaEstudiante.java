@@ -29,7 +29,7 @@ public class ListaEstudiante {
 
         /* Construye un nodo con un elemento. */
         private Nodo(Estudiante elemento) {
-            // Aquí va su código.
+            this.elemento = elemento;
         }
 
         /**
@@ -37,7 +37,7 @@ public class ListaEstudiante {
          * @return el nodo anterior del nodo.
          */
         public Nodo getAnterior() {
-            // Aquí va su código.
+            return anterior;
         }
 
         /**
@@ -45,7 +45,7 @@ public class ListaEstudiante {
          * @return el nodo siguiente del nodo.
          */
         public Nodo getSiguiente() {
-            // Aquí va su código.
+            return siguiente;
         }
 
         /**
@@ -53,7 +53,7 @@ public class ListaEstudiante {
          * @return el elemento del nodo.
          */
         public Estudiante get() {
-            // Aquí va su código.
+            return elemento;    
         }
     }
 
