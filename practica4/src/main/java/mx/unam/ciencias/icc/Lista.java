@@ -28,7 +28,6 @@ public class Lista {
         private Nodo(Object elemento) {
             if (elemento == null)
                 return;
-
             this.elemento = elemento;
         }
 
@@ -90,9 +89,7 @@ public class Lista {
     public void agregaFinal(Object elemento) {
         if (elemento == null)
             return;
-        
         Nodo nuevo = new Nodo(elemento);
-
         if (esVacia())
             cabeza = rabo = nuevo;
         else {
@@ -112,9 +109,7 @@ public class Lista {
     public void agregaInicio(Object elemento) {
         if (elemento == null)
             return;
-
         Nodo nuevo = new Nodo(elemento);
-
         if (esVacia())
             cabeza = rabo = nuevo;
         else {
@@ -140,7 +135,26 @@ public class Lista {
      *                 si es distinto de <code>null</code>.
      */
     public void inserta(int i, Object elemento) {
-        // Aquí va su código.
+        if (elemento == null)
+            return;
+        if (i <= 0) {
+            agregaInicio(elemento);
+            return;
+        }
+        if (i >= longitud) {
+            agregaFinal(elemento);
+            return;
+        }
+        Nodo temp = cabeza;
+        for (int j = 0; j < i - 1; j++) {
+            temp = temp.siguiente;
+        }
+        Nodo nuevo = new Nodo(elemento);
+        nuevo.anterior = temp;
+        nuevo.siguiente = temp.siguiente;
+        temp.siguiente.anterior = nuevo;
+        temp.siguiente = nuevo;
+        longitud++;
     }
 
     /**
@@ -149,7 +163,41 @@ public class Lista {
      * @param elemento el elemento a eliminar.
      */
     public void elimina(Object elemento) {
-        // Aquí va su código.
+        if (esVacia() || elemento == null) 
+            return;
+        Nodo eliminado = getNodo(elemento);
+        if (eliminado == null) 
+            return;
+        if (eliminado == cabeza) {
+            eliminaPrimero();
+            return;
+        }
+        if (eliminado == rabo) {
+            eliminaUltimo();
+            return;
+        }
+        eliminado.anterior.siguiente = eliminado.siguiente;
+        eliminado.siguiente.anterior = eliminado.anterior;
+        longitud--;
+    }
+
+    /**
+     * Metodo auxiliar al metodo elimina.
+     * Busca el elemento recibido en la lista.
+     * @param elemento el elemento a buscar en la lista.
+     * @return el nodo que contega la primer ocurrencia de elemento, o
+     * <code>null</code> si no se encuentra en la lista.
+     */
+    private Nodo getNodo(Object elemento) {
+        if (esVacia() || elemento == null)
+            return null;
+        Nodo temp = cabeza;
+        while (temp != null) {
+            if (temp.elemento.equals(elemento)) 
+                return temp;
+            temp = temp.siguiente;
+        }
+        return null;
     }
 
     /**
@@ -160,9 +208,7 @@ public class Lista {
     public Object eliminaPrimero() {
         if (esVacia())
             return null;
-
         Object elemento = cabeza.elemento;
-
         if (cabeza == rabo)
             cabeza = rabo = null;
         else {
@@ -170,8 +216,7 @@ public class Lista {
             cabeza.anterior = null;
         }
         longitud--;
-
-        return cabeza.elemento;
+        return elemento;
     }
 
     /**
@@ -182,9 +227,7 @@ public class Lista {
     public Object eliminaUltimo() {
         if (esVacia())
             return null;
-
         Object elemento = rabo.elemento;
-
         if (cabeza == rabo)
             cabeza = rabo = null;
         else {
@@ -192,7 +235,6 @@ public class Lista {
             rabo.siguiente = null;
         }
         longitud--;
-
         return elemento;
     }
 
@@ -203,18 +245,7 @@ public class Lista {
      *         <code>false</code> en otro caso.
      */
     public boolean contiene(Object elemento) {
-        if (elemento == null)
-            return false;
-
-        Nodo tmp = cabeza;
-
-        for (int i = 0; i < longitud; i++) {
-            if (tmp.elemento.equals(elemento))
-                return true;
-            tmp = tmp.siguiente;
-        }
-
-        return false;
+        return getNodo(elemento) != null;
     }
 
     /**
@@ -223,14 +254,11 @@ public class Lista {
      */
     public Lista reversa() {
         Lista reversa = new Lista();
-
         Nodo tmp = cabeza;
-
         for (int i = 0; i < longitud; i++) {
             reversa.agregaInicio(tmp.elemento);
             tmp = tmp.siguiente;
         }
-
         return reversa;
     }
 
@@ -241,14 +269,11 @@ public class Lista {
      */
     public Lista copia() {
         Lista copia = new Lista();
-
         Nodo tmp = cabeza;
-
         while (tmp != null) {
             copia.agregaFinal(tmp.elemento);
             tmp = tmp.siguiente;
         }
-
         return copia;
     }
 
@@ -266,7 +291,7 @@ public class Lista {
      *         es vacía.
      */
     public Object getPrimero() {
-        return cabeza.elemento;
+        return (!esVacia()) ? cabeza.elemento : null;
     }
 
     /**
@@ -275,7 +300,7 @@ public class Lista {
      *         es vacía.
      */
     public Object getUltimo() {
-        return rabo.elemento;
+        return (!esVacia()) ? rabo.elemento : null;
     }
 
     /**
@@ -286,7 +311,13 @@ public class Lista {
      *         elementos en la lista.
      */
     public Object get(int i) {
-        // Aquí va su código.
+        if (i < 0 || i >= longitud)
+            return null;
+        Nodo temp = cabeza;
+        for (int j = 0; j < i; j++) {
+            temp = temp.siguiente;
+        }
+        return temp.elemento;
     }
 
     /**
@@ -296,7 +327,15 @@ public class Lista {
      *         no está contenido en la lista.
      */
     public int indiceDe(Object elemento) {
-        // Aquí va su código.
+        if (esVacia() || elemento == null)
+            return -1;
+        Nodo temp = cabeza;
+        for (int i = 0; i < longitud; i++) {
+            if (temp.elemento.equals(elemento))
+                return i;
+            temp = temp.siguiente;
+        }
+        return -1;
     }
 
     /**
@@ -304,7 +343,15 @@ public class Lista {
      * @return una representación en cadena de la lista.
      */
     @Override public String toString() {
-        // Aquí va su código.
+        StringBuilder sb = new StringBuilder("[");
+        Nodo temp = cabeza;
+        while (temp != null) {
+            sb.append(temp.elemento);
+            if (temp.siguiente != null) 
+                sb.append(", ");
+            temp = temp.siguiente;
+        }
+        return sb.toString() + "]";
     }
 
     /**
@@ -314,7 +361,22 @@ public class Lista {
      *         <code>false</code> en otro caso.
      */
     @Override public boolean equals(Object objeto) {
-        // Aquí va su código.
+        if (objeto == null)
+            return false;
+        if (!(objeto instanceof Lista))
+            return false;
+        Lista lista = (Lista) objeto;
+        if (longitud != lista.getLongitud())
+            return false;
+        Nodo n1 = cabeza;
+        Nodo n2 = lista.getCabeza();
+        while (n1 != null) {
+            if (!n1.elemento.equals(n2.elemento))
+                return false;
+            n1 = n1.siguiente;
+            n2 = n2.siguiente;
+        }
+        return true;
     }
 
     /**
