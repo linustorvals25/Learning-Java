@@ -10,6 +10,6 @@ public class BaseDeDatosEstudiantes extends BaseDeDatos {
      * @return un estudiante en blanco.
      */
     @Override public Registro creaRegistro() {
-        // Aquí va su código.
+        return new Estudiante(null, 0, 0.0, 0);
     }
 }

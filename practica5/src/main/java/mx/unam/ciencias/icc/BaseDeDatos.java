@@ -4,6 +4,8 @@ import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.IOException;
 
+import mx.unam.ciencias.icc.Lista.Nodo;
+
 /**
  * Clase abstracta para bases de datos. Provee métodos para agregar y eliminar
  * registros, y para guardarse y cargarse de una entrada y salida dados. Además,
@@ -22,7 +24,7 @@ public abstract class BaseDeDatos {
      * Constructor único.
      */
     public BaseDeDatos() {
-        // Aquí va su código.
+        registros = new Lista();
     }
 
     /**
@@ -30,7 +32,7 @@ public abstract class BaseDeDatos {
      * @return el número de registros en la base de datos.
      */
     public int getNumRegistros() {
-        // Aquí va su código.
+        return registros.getLongitud();
     }
 
     /**
@@ -39,7 +41,7 @@ public abstract class BaseDeDatos {
      * @return una lista con los registros en la base de datos.
      */
     public Lista getRegistros() {
-        // Aquí va su código.
+        return registros.copia();
     }
 
     /**
@@ -47,7 +49,7 @@ public abstract class BaseDeDatos {
      * @param registro el registro que hay que agregar a la base de datos.
      */
     public void agregaRegistro(Registro registro) {
-        // Aquí va su código.
+        registros.agregaFinal(registro);
     }
 
     /**
@@ -55,14 +57,14 @@ public abstract class BaseDeDatos {
      * @param registro el registro que hay que eliminar de la base de datos.
      */
     public void eliminaRegistro(Registro registro) {
-        // Aquí va su código.
+        registros.elimina(registro);
     }
 
     /**
      * Limpia la base de datos.
      */
     public void limpia() {
-        // Aquí va su código.
+        registros.limpia();
     }
 
     /**
@@ -71,7 +73,11 @@ public abstract class BaseDeDatos {
      * @throws IOException si ocurre un error de entrada/salida.
      */
     public void guarda(BufferedWriter out) throws IOException {
-        // Aquí va su código.
+        Lista.Nodo temp = registros.getCabeza();
+        while (temp != null) {
+            out.append(((Registro)temp.get()).seria());
+            temp = temp.getSiguiente();
+        }
     }
 
     /**
@@ -82,7 +88,17 @@ public abstract class BaseDeDatos {
      * @throws IOException si ocurre un error de entrada/salida.
      */
     public void carga(BufferedReader in) throws IOException {
-        // Aquí va su código.
+        registros.limpia();
+        String linea;
+        while ((linea = in.readLine()) != null) {
+            Registro registro = creaRegistro();
+            try {
+                registro.deseria(linea);
+            } catch (ExcepcionLineaInvalida eli) {
+                return;
+            }
+            registros.agregaFinal(registro);
+        }
     }
 
     /**
@@ -95,7 +111,17 @@ public abstract class BaseDeDatos {
      *         correcta.
      */
     public Lista buscaRegistros(Enum campo, Object valor) {
-        // Aquí va su código.
+        if (!(campo instanceof CampoEstudiante))
+            throw new IllegalArgumentException("El campo no es de la enumeracion correcta.");
+        Lista casa = new Lista();
+        Lista.Nodo temp = registros.getCabeza();
+        while (temp != null) {
+            Registro reg = (Registro) temp.get();
+            if (reg.casa(campo, valor))
+                casa.agregaFinal(reg);
+            temp = temp.getSiguiente();
+        }
+        return casa;
     }
 
     /**
