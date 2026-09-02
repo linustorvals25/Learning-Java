@@ -103,7 +103,7 @@ public class Estudiante {
     @Override public String toString() {
         return String.format("Nombre   : %s\n" +
                              "Cuenta   : %09d\n" + 
-                             "Promedio :%2.2f\n" +
+                             "Promedio : %2.2f\n" +
                              "Edad     : %d",
                             nombre, cuenta, promedio, edad);
     }
