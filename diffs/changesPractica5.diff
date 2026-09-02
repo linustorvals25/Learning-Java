@@ -1,0 +1,1093 @@
+diff --git a/practica5/src/main/java/mx/unam/ciencias/icc/BaseDeDatos.java b/practica5/src/main/java/mx/unam/ciencias/icc/BaseDeDatos.java
+index 086e572..9f1855a 100644
+--- a/practica5/src/main/java/mx/unam/ciencias/icc/BaseDeDatos.java
++++ b/practica5/src/main/java/mx/unam/ciencias/icc/BaseDeDatos.java
+@@ -4,6 +4,8 @@ import java.io.BufferedReader;
+ import java.io.BufferedWriter;
+ import java.io.IOException;
+ 
++import mx.unam.ciencias.icc.Lista.Nodo;
++
+ /**
+  * Clase abstracta para bases de datos. Provee métodos para agregar y eliminar
+  * registros, y para guardarse y cargarse de una entrada y salida dados. Además,
+@@ -22,7 +24,7 @@ public abstract class BaseDeDatos {
+      * Constructor único.
+      */
+     public BaseDeDatos() {
+-        // Aquí va su código.
++        registros = new Lista();
+     }
+ 
+     /**
+@@ -30,7 +32,7 @@ public abstract class BaseDeDatos {
+      * @return el número de registros en la base de datos.
+      */
+     public int getNumRegistros() {
+-        // Aquí va su código.
++        return registros.getLongitud();
+     }
+ 
+     /**
+@@ -39,7 +41,7 @@ public abstract class BaseDeDatos {
+      * @return una lista con los registros en la base de datos.
+      */
+     public Lista getRegistros() {
+-        // Aquí va su código.
++        return registros.copia();
+     }
+ 
+     /**
+@@ -47,7 +49,7 @@ public abstract class BaseDeDatos {
+      * @param registro el registro que hay que agregar a la base de datos.
+      */
+     public void agregaRegistro(Registro registro) {
+-        // Aquí va su código.
++        registros.agregaFinal(registro);
+     }
+ 
+     /**
+@@ -55,14 +57,14 @@ public abstract class BaseDeDatos {
+      * @param registro el registro que hay que eliminar de la base de datos.
+      */
+     public void eliminaRegistro(Registro registro) {
+-        // Aquí va su código.
++        registros.elimina(registro);
+     }
+ 
+     /**
+      * Limpia la base de datos.
+      */
+     public void limpia() {
+-        // Aquí va su código.
++        registros.limpia();
+     }
+ 
+     /**
+@@ -71,7 +73,11 @@ public abstract class BaseDeDatos {
+      * @throws IOException si ocurre un error de entrada/salida.
+      */
+     public void guarda(BufferedWriter out) throws IOException {
+-        // Aquí va su código.
++        Lista.Nodo temp = registros.getCabeza();
++        while (temp != null) {
++            out.append(((Registro)temp.get()).seria());
++            temp = temp.getSiguiente();
++        }
+     }
+ 
+     /**
+@@ -82,7 +88,17 @@ public abstract class BaseDeDatos {
+      * @throws IOException si ocurre un error de entrada/salida.
+      */
+     public void carga(BufferedReader in) throws IOException {
+-        // Aquí va su código.
++        registros.limpia();
++        String linea;
++        while ((linea = in.readLine()) != null) {
++            Registro registro = creaRegistro();
++            try {
++                registro.deseria(linea);
++            } catch (ExcepcionLineaInvalida eli) {
++                return;
++            }
++            registros.agregaFinal(registro);
++        }
+     }
+ 
+     /**
+@@ -95,7 +111,17 @@ public abstract class BaseDeDatos {
+      *         correcta.
+      */
+     public Lista buscaRegistros(Enum campo, Object valor) {
+-        // Aquí va su código.
++        if (!(campo instanceof CampoEstudiante))
++            throw new IllegalArgumentException("El campo no es de la enumeracion correcta.");
++        Lista casa = new Lista();
++        Lista.Nodo temp = registros.getCabeza();
++        while (temp != null) {
++            Registro reg = (Registro) temp.get();
++            if (reg.casa(campo, valor))
++                casa.agregaFinal(reg);
++            temp = temp.getSiguiente();
++        }
++        return casa;
+     }
+ 
+     /**
+diff --git a/practica5/src/main/java/mx/unam/ciencias/icc/BaseDeDatosEstudiantes.java b/practica5/src/main/java/mx/unam/ciencias/icc/BaseDeDatosEstudiantes.java
+index 921ac5b..8f9e3ea 100644
+--- a/practica5/src/main/java/mx/unam/ciencias/icc/BaseDeDatosEstudiantes.java
++++ b/practica5/src/main/java/mx/unam/ciencias/icc/BaseDeDatosEstudiantes.java
+@@ -10,6 +10,6 @@ public class BaseDeDatosEstudiantes extends BaseDeDatos {
+      * @return un estudiante en blanco.
+      */
+     @Override public Registro creaRegistro() {
+-        // Aquí va su código.
++        return new Estudiante(null, 0, 0.0, 0);
+     }
+ }
+diff --git a/practica5/src/main/java/mx/unam/ciencias/icc/CampoEstudiante.java b/practica5/src/main/java/mx/unam/ciencias/icc/CampoEstudiante.java
+index 4a8740d..ad05061 100644
+--- a/practica5/src/main/java/mx/unam/ciencias/icc/CampoEstudiante.java
++++ b/practica5/src/main/java/mx/unam/ciencias/icc/CampoEstudiante.java
+@@ -20,6 +20,12 @@ public enum CampoEstudiante {
+      * @return una representación en cadena del campo.
+      */
+     @Override public String toString() {
+-        // Aquí va su código.
++        switch (this) {
++            case NOMBRE: return "Nombre";
++            case CUENTA: return "# Cuenta";
++            case PROMEDIO: return "Promedio";
++            case EDAD: return "Edad";
++            default: throw new IllegalArgumentException("Error en CampoEstudiante.toString()");
++        }
+     }
+ }
+diff --git a/practica5/src/main/java/mx/unam/ciencias/icc/Estudiante.java b/practica5/src/main/java/mx/unam/ciencias/icc/Estudiante.java
+index c792b12..bea725b 100644
+--- a/practica5/src/main/java/mx/unam/ciencias/icc/Estudiante.java
++++ b/practica5/src/main/java/mx/unam/ciencias/icc/Estudiante.java
+@@ -28,7 +28,10 @@ public class Estudiante implements Registro {
+                       int    cuenta,
+                       double promedio,
+                       int    edad) {
+-        // Aquí va su código.
++        this.nombre = nombre;
++        this.cuenta = cuenta;
++        this.promedio = promedio;
++        this.edad = edad;
+     }
+ 
+     /**
+@@ -36,7 +39,7 @@ public class Estudiante implements Registro {
+      * @return el nombre del estudiante.
+      */
+     public String getNombre() {
+-        // Aquí va su código.
++        return nombre;
+     }
+ 
+     /**
+@@ -44,7 +47,7 @@ public class Estudiante implements Registro {
+      * @param nombre el nuevo nombre del estudiante.
+      */
+     public void setNombre(String nombre) {
+-        // Aquí va su código.
++        this.nombre = nombre;
+     }
+ 
+     /**
+@@ -52,7 +55,7 @@ public class Estudiante implements Registro {
+      * @return el número de cuenta del estudiante.
+      */
+     public int getCuenta() {
+-        // Aquí va su código.
++        return cuenta;
+     }
+ 
+     /**
+@@ -60,7 +63,7 @@ public class Estudiante implements Registro {
+      * @param cuenta el nuevo número de cuenta del estudiante.
+      */
+     public void setCuenta(int cuenta) {
+-        // Aquí va su código.
++        this.cuenta = cuenta;
+     }
+ 
+     /**
+@@ -68,7 +71,7 @@ public class Estudiante implements Registro {
+      * @return el promedio del estudiante.
+      */
+     public double getPromedio() {
+-        // Aquí va su código.
++        return promedio;
+     }
+ 
+     /**
+@@ -76,7 +79,7 @@ public class Estudiante implements Registro {
+      * @param promedio el nuevo promedio del estudiante.
+      */
+     public void setPromedio(double promedio) {
+-        // Aquí va su código.
++        this.promedio = promedio;
+     }
+ 
+     /**
+@@ -84,7 +87,7 @@ public class Estudiante implements Registro {
+      * @return la edad del estudiante.
+      */
+     public int getEdad() {
+-        // Aquí va su código.
++        return edad;
+     }
+ 
+     /**
+@@ -92,7 +95,7 @@ public class Estudiante implements Registro {
+      * @param edad la nueva edad del estudiante.
+      */
+     public void setEdad(int edad) {
+-        // Aquí va su código.
++        this.edad = edad;
+     }
+ 
+     /**
+@@ -100,7 +103,11 @@ public class Estudiante implements Registro {
+      * @return una representación en cadena del estudiante.
+      */
+     @Override public String toString() {
+-        // Aquí va su código.
++        return String.format("Nombre   : %s\n" +
++                             "Cuenta   : %09d\n" + 
++                             "Promedio : %2.2f\n" +
++                             "Edad     : %d", 
++                             nombre, cuenta, promedio, edad);
+     }
+ 
+     /**
+@@ -115,7 +122,10 @@ public class Estudiante implements Registro {
+         if (!(objeto instanceof Estudiante))
+             return false;
+         Estudiante estudiante = (Estudiante)objeto;
+-        // Aquí va su código.
++        return nombre.equals(estudiante.nombre) &&
++               cuenta == estudiante.cuenta &&
++               promedio == estudiante.promedio &&
++               edad == estudiante.edad;
+     }
+ 
+     /**
+@@ -125,7 +135,7 @@ public class Estudiante implements Registro {
+      * @return la seriación del estudiante en una línea de texto.
+      */
+     @Override public String seria() {
+-        // Aquí va su código.
++        return String.format("%s\t%d\t%2.2f\t%d\n", nombre, cuenta, promedio, edad);
+     }
+ 
+     /**
+@@ -137,7 +147,22 @@ public class Estudiante implements Registro {
+      *         es una seriación válida de un estudiante.
+      */
+     @Override public void deseria(String linea) {
+-        // Aquí va su código.
++        if (linea == null || linea.isEmpty()) {
++            throw new ExcepcionLineaInvalida("Formato incorrecto de de-serializacion.");
++        }
++        linea = linea.trim();
++        String[] datos = linea.split("\t");
++        if (datos.length != 4) {
++            throw new ExcepcionLineaInvalida("Formato incorrecto de de-serializacion.");
++        }
++        nombre = datos[0];
++        try {
++            cuenta = Integer.parseInt(datos[1]);
++            promedio = Double.parseDouble(datos[2]);
++            edad = Integer.parseInt(datos[3]);
++        } catch (NumberFormatException nfe) {
++            throw new ExcepcionLineaInvalida("String con datos incorrectos para de-serializacion,");
++        }
+     }
+ 
+     /**
+@@ -167,6 +192,30 @@ public class Estudiante implements Registro {
+      *         CampoEstudiante}.
+      */
+     @Override public boolean casa(Enum campo, Object valor) {
+-        // Aquí va su código.
++        if (!(campo instanceof CampoEstudiante))
++            throw new IllegalArgumentException("El campo no es instancia de CampoEstudiante");
++        CampoEstudiante c = (CampoEstudiante) campo;
++        switch (c) {
++            case NOMBRE: 
++                if (valor instanceof String) {
++                    String aux = (String) valor;
++                    return (!aux.isEmpty()) && nombre.indexOf(aux) != -1;
++                }
++                return false;
++            case CUENTA:
++                if (valor instanceof Integer) 
++                    return cuenta >= (Integer) valor;
++                return false;
++            case PROMEDIO:
++                if (valor instanceof Double)
++                    return promedio >= (Double) valor;
++                return false;
++            case EDAD:
++                if (valor instanceof Integer) 
++                    return edad >= (Integer) valor;
++                return false;
++            default: 
++                return false;
++        }
+     }
+ }
+diff --git a/practica5/src/main/java/mx/unam/ciencias/icc/Lista.java b/practica5/src/main/java/mx/unam/ciencias/icc/Lista.java
+index bb7a2c2..720199a 100644
+--- a/practica5/src/main/java/mx/unam/ciencias/icc/Lista.java
++++ b/practica5/src/main/java/mx/unam/ciencias/icc/Lista.java
+@@ -28,7 +28,7 @@ public class Lista {
+ 
+         /* Construye un nodo con un elemento. */
+         private Nodo(Object elemento) {
+-            // Aquí va su código.
++            this.elemento = elemento;
+         }
+ 
+         /**
+@@ -36,7 +36,7 @@ public class Lista {
+          * @return el nodo anterior del nodo.
+          */
+         public Nodo getAnterior() {
+-            // Aquí va su código.
++            return anterior;
+         }
+ 
+         /**
+@@ -44,7 +44,7 @@ public class Lista {
+          * @return el nodo siguiente del nodo.
+          */
+         public Nodo getSiguiente() {
+-            // Aquí va su código.
++            return siguiente;
+         }
+ 
+         /**
+@@ -52,7 +52,7 @@ public class Lista {
+          * @return el elemento del nodo.
+          */
+         public Object get() {
+-            // Aquí va su código.
++            return elemento;
+         }
+     }
+ 
+@@ -62,13 +62,19 @@ public class Lista {
+     private Nodo rabo;
+     /* Número de elementos en la lista. */
+     private int longitud;
++    /* Mensaje de error al tratar de agregar un elemento null a la lista */
++    private static final String MSJ_NULL_ELEM = "La lista no acepta a null como elemento.";
++    /* Mensaje de error al tratar de eliminar cuando la lista esta vacia. */
++    private static final String MSJ_EMPTY_LIST = "La lista esta vacia, no hay elemento ha eliminar.";
++    /* Mensaje de error al tratar de obtener un elemento de la lista cuando esta vacia. */
++    private static final String MSJ_EMPTY = "La lista esta vacia, no tiene elementos.";
+ 
+     /**
+      * Regresa la longitud de la lista.
+      * @return la longitud de la lista, el número de elementos que contiene.
+      */
+     public int getLongitud() {
+-        // Aquí va su código.
++        return longitud;
+     }
+ 
+     /**
+@@ -77,7 +83,7 @@ public class Lista {
+      *         otro caso.
+      */
+     public boolean esVacia() {
+-        // Aquí va su código.
++        return cabeza == null;
+     }
+ 
+     /**
+@@ -88,7 +94,17 @@ public class Lista {
+      *         <code>null</code>.
+      */
+     public void agregaFinal(Object elemento) {
+-        // Aquí va su código.
++        if (elemento == null)
++            throw new IllegalArgumentException(MSJ_NULL_ELEM);
++        Nodo nuevo = new Nodo(elemento);
++        if (esVacia()) {
++            cabeza = rabo = nuevo;
++        } else {
++            rabo.siguiente = nuevo;
++            nuevo.anterior = rabo;
++            rabo = nuevo;
++        }
++        longitud++;
+     }
+ 
+     /**
+@@ -99,7 +115,17 @@ public class Lista {
+      *         <code>null</code>.
+      */
+     public void agregaInicio(Object elemento) {
+-        // Aquí va su código.
++        if (elemento == null)
++            throw new IllegalArgumentException(MSJ_NULL_ELEM);
++        Nodo nuevo = new Nodo(elemento);
++        if (esVacia()) {
++            cabeza = rabo = nuevo;      
++        } else {
++            cabeza.anterior = nuevo;
++            nuevo.siguiente = cabeza;
++            cabeza = nuevo;
++        }
++        longitud++;
+     }
+ 
+     /**
+@@ -118,7 +144,26 @@ public class Lista {
+      *         <code>null</code>.
+      */
+     public void inserta(int i, Object elemento) {
+-        // Aquí va su código.
++        if (elemento == null)
++            throw new IllegalArgumentException(MSJ_NULL_ELEM);
++        if (i <= 0) {
++            agregaInicio(elemento);
++            return;
++        }
++        if (i >= longitud) {
++            agregaFinal(elemento);
++            return;
++        }
++        Nodo nuevo = new Nodo(elemento);
++        Nodo temp = cabeza;
++        for (int j = 0; j < i - 1; j++) {
++            temp = temp.siguiente;
++        }
++        nuevo.anterior = temp;
++        nuevo.siguiente = temp.siguiente;
++        temp.siguiente.anterior = nuevo;
++        temp.siguiente = nuevo;
++        longitud++;
+     }
+ 
+     /**
+@@ -127,16 +172,60 @@ public class Lista {
+      * @param elemento el elemento a eliminar.
+      */
+     public void elimina(Object elemento) {
+-        // Aquí va su código.
++        if (elemento == null)
++            return;
++        Nodo eliminado = getNodo(elemento);
++        if (eliminado == null)
++            return;
++        if (eliminado == cabeza) {
++            eliminaPrimero();
++            return;
++        }
++        if (eliminado == rabo) {
++            eliminaUltimo();
++            return;
++        }
++        eliminado.anterior.siguiente = eliminado.siguiente;
++        eliminado.siguiente.anterior = eliminado.anterior;
++        longitud--;
++    }
++
++    /**
++     * Metodo auxiliar al metodo elimina.
++     * @param elemento el elemento a buscar en la lista.
++     * @return el Lista.Nodo que contenga la primer ocurrencia del elemento recibido,
++     * o <code>null</code> si el elemento no esta en la lista.
++     */
++    private Nodo getNodo(Object elemento) {
++        if (esVacia() || elemento == null)
++            return null;
++        Nodo temp = cabeza;
++        while (temp != null) {
++            if (temp.elemento.equals(elemento))
++                return temp;
++            temp = temp.siguiente;
++        }
++        return null;
+     }
+ 
++
+     /**
+      * Elimina el primer elemento de la lista y lo regresa.
+      * @return el primer elemento de la lista antes de eliminarlo.
+      * @throws NoSuchElementException si la lista es vacía.
+      */
+     public Object eliminaPrimero() {
+-        // Aquí va su código.
++        if (esVacia())
++            throw new NoSuchElementException(MSJ_EMPTY_LIST);
++        Object eliminado = cabeza.elemento;
++        if (cabeza == rabo) {
++            cabeza = rabo = null;
++        } else {
++            cabeza = cabeza.siguiente;
++            cabeza.anterior = null;
++        }
++        longitud--;
++        return eliminado;
+     }
+ 
+     /**
+@@ -145,7 +234,17 @@ public class Lista {
+      * @throws NoSuchElementException si la lista es vacía.
+      */
+     public Object eliminaUltimo() {
+-        // Aquí va su código.
++        if (esVacia())
++            throw new NoSuchElementException(MSJ_EMPTY_LIST);
++        Object eliminado = rabo.elemento;
++        if (cabeza == rabo) {
++            cabeza = rabo = null;
++        } else {
++            rabo = rabo.anterior;
++            rabo.siguiente = null;
++        }
++        longitud--;
++        return eliminado;
+     }
+ 
+     /**
+@@ -155,7 +254,7 @@ public class Lista {
+      *         <code>false</code> en otro caso.
+      */
+     public boolean contiene(Object elemento) {
+-        // Aquí va su código.
++        return getNodo(elemento) != null;
+     }
+ 
+     /**
+@@ -163,7 +262,13 @@ public class Lista {
+      * @return una nueva lista que es la reversa la que manda llamar el método.
+      */
+     public Lista reversa() {
+-        // Aquí va su código.
++        Lista reversa = new Lista();
++        Nodo temp = cabeza;
++        while (temp != null) {
++            reversa.agregaInicio(temp.elemento);
++            temp = temp.siguiente;
++        }
++        return reversa;
+     }
+ 
+     /**
+@@ -172,14 +277,21 @@ public class Lista {
+      * @return una copiad de la lista.
+      */
+     public Lista copia() {
+-        // Aquí va su código.
++        Lista copia = new Lista();
++        Nodo temp = cabeza;
++        while (temp != null) {
++            copia.agregaFinal(temp.elemento);
++            temp = temp.siguiente;
++        }
++        return copia;
+     }
+ 
+     /**
+      * Limpia la lista de elementos, dejándola vacía.
+      */
+     public void limpia() {
+-        // Aquí va su código.
++        cabeza = rabo = null;
++        longitud = 0;
+     }
+ 
+     /**
+@@ -188,7 +300,9 @@ public class Lista {
+      * @throws NoSuchElementException si la lista es vacía.
+      */
+     public Object getPrimero() {
+-        // Aquí va su código.
++        if (esVacia())
++            throw new NoSuchElementException(MSJ_EMPTY);
++        return cabeza.elemento;
+     }
+ 
+     /**
+@@ -197,7 +311,9 @@ public class Lista {
+      * @throws NoSuchElementException si la lista es vacía.
+      */
+     public Object getUltimo() {
+-        // Aquí va su código.
++        if (esVacia())
++            throw new NoSuchElementException(MSJ_EMPTY);
++        return rabo.elemento;
+     }
+ 
+     /**
+@@ -208,7 +324,13 @@ public class Lista {
+      *         igual que el número de elementos en la lista.
+      */
+     public Object get(int i) {
+-        // Aquí va su código.
++        if (esVacia() || i < 0 || i >= longitud)
++            throw new ExcepcionIndiceInvalido("Indice fuera de rango: [0, longitud).");
++        Nodo temp = cabeza;
++        for (int j = 0; j < i; j++) {
++            temp = temp.siguiente;
++        }
++        return temp.elemento;
+     }
+ 
+     /**
+@@ -218,7 +340,15 @@ public class Lista {
+      *         no está contenido en la lista.
+      */
+     public int indiceDe(Object elemento) {
+-        // Aquí va su código.
++        if (esVacia() || elemento == null)
++            return -1;
++        Nodo temp = cabeza;
++        for (int i = 0; i < longitud; i++) {
++            if (temp.elemento.equals(elemento))
++                return i;
++            temp = temp.siguiente;
++        }
++        return -1;
+     }
+ 
+     /**
+@@ -226,7 +356,15 @@ public class Lista {
+      * @return una representación en cadena de la lista.
+      */
+     @Override public String toString() {
+-        // Aquí va su código.
++        StringBuilder sb = new StringBuilder("[");
++        Nodo temp = cabeza;
++        while (temp != null) {
++            sb.append(temp.elemento);
++            if (temp.siguiente != null)
++                sb.append(", ");
++            temp = temp.siguiente;
++        }
++        return sb.toString() + "]";
+     }
+ 
+     /**
+@@ -239,7 +377,17 @@ public class Lista {
+         if (!(objeto instanceof Lista))
+             return false;
+         Lista lista = (Lista)objeto;
+-        // Aquí va su código.
++        if (longitud != lista.longitud)
++            return false;
++        Nodo n1 = cabeza;
++        Nodo n2 = lista.cabeza;
++        for (int i = 0; i < longitud; i++) {
++            if (!n1.elemento.equals(n2.elemento))
++                return false;
++            n1 = n1.siguiente;
++            n2 = n2.siguiente;
++        }
++        return true;
+     }
+ 
+     /**
+@@ -247,7 +395,7 @@ public class Lista {
+      * @return el nodo cabeza de la lista.
+      */
+     public Nodo getCabeza() {
+-        // Aquí va su código.
++        return cabeza;
+     }
+ 
+     /**
+@@ -255,6 +403,6 @@ public class Lista {
+      * @return el nodo rabo de la lista.
+      */
+     public Nodo getRabo() {
+-        // Aquí va su código.
++        return rabo;
+     }
+ }
+diff --git a/practica5/target/maven-status/maven-compiler-plugin/compile/default-compile/createdFiles.lst b/practica5/target/maven-status/maven-compiler-plugin/compile/default-compile/createdFiles.lst
+new file mode 100644
+index 0000000..e69de29
+diff --git a/practica5/target/maven-status/maven-compiler-plugin/compile/default-compile/inputFiles.lst b/practica5/target/maven-status/maven-compiler-plugin/compile/default-compile/inputFiles.lst
+new file mode 100644
+index 0000000..6ddac6f
+--- /dev/null
++++ b/practica5/target/maven-status/maven-compiler-plugin/compile/default-compile/inputFiles.lst
+@@ -0,0 +1,11 @@
++/home/linus/Documents/Learning-Java/practica5/src/main/java/mx/unam/ciencias/icc/Registro.java
++/home/linus/Documents/Learning-Java/practica5/src/main/java/mx/unam/ciencias/icc/Aplicacion.java
++/home/linus/Documents/Learning-Java/practica5/src/main/java/mx/unam/ciencias/icc/ExcepcionIndiceInvalido.java
++/home/linus/Documents/Learning-Java/practica5/src/main/java/mx/unam/ciencias/icc/ExcepcionLineaInvalida.java
++/home/linus/Documents/Learning-Java/practica5/src/main/java/mx/unam/ciencias/icc/ExcepcionOpcionInvalida.java
++/home/linus/Documents/Learning-Java/practica5/src/main/java/mx/unam/ciencias/icc/Lista.java
++/home/linus/Documents/Learning-Java/practica5/src/main/java/mx/unam/ciencias/icc/Practica5.java
++/home/linus/Documents/Learning-Java/practica5/src/main/java/mx/unam/ciencias/icc/BaseDeDatos.java
++/home/linus/Documents/Learning-Java/practica5/src/main/java/mx/unam/ciencias/icc/Estudiante.java
++/home/linus/Documents/Learning-Java/practica5/src/main/java/mx/unam/ciencias/icc/BaseDeDatosEstudiantes.java
++/home/linus/Documents/Learning-Java/practica5/src/main/java/mx/unam/ciencias/icc/CampoEstudiante.java
+diff --git a/practica5/target/maven-status/maven-compiler-plugin/testCompile/default-testCompile/createdFiles.lst b/practica5/target/maven-status/maven-compiler-plugin/testCompile/default-testCompile/createdFiles.lst
+new file mode 100644
+index 0000000..e69de29
+diff --git a/practica5/target/maven-status/maven-compiler-plugin/testCompile/default-testCompile/inputFiles.lst b/practica5/target/maven-status/maven-compiler-plugin/testCompile/default-testCompile/inputFiles.lst
+new file mode 100644
+index 0000000..7b2f09f
+--- /dev/null
++++ b/practica5/target/maven-status/maven-compiler-plugin/testCompile/default-testCompile/inputFiles.lst
+@@ -0,0 +1,4 @@
++/home/linus/Documents/Learning-Java/practica5/src/test/java/mx/unam/ciencias/icc/test/TestCampoEstudiante.java
++/home/linus/Documents/Learning-Java/practica5/src/test/java/mx/unam/ciencias/icc/test/TestLista.java
++/home/linus/Documents/Learning-Java/practica5/src/test/java/mx/unam/ciencias/icc/test/TestBaseDeDatosEstudiantes.java
++/home/linus/Documents/Learning-Java/practica5/src/test/java/mx/unam/ciencias/icc/test/TestEstudiante.java
+diff --git a/practica5/target/surefire-reports/TEST-mx.unam.ciencias.icc.test.TestBaseDeDatosEstudiantes.xml b/practica5/target/surefire-reports/TEST-mx.unam.ciencias.icc.test.TestBaseDeDatosEstudiantes.xml
+new file mode 100644
+index 0000000..9e303a9
+--- /dev/null
++++ b/practica5/target/surefire-reports/TEST-mx.unam.ciencias.icc.test.TestBaseDeDatosEstudiantes.xml
+@@ -0,0 +1,72 @@
++<?xml version="1.0" encoding="UTF-8"?>
++<testsuite name="mx.unam.ciencias.icc.test.TestBaseDeDatosEstudiantes" time="0.055" tests="10" errors="0" skipped="0" failures="0">
++  <properties>
++    <property name="jansi.mode" value="force"/>
++    <property name="java.runtime.name" value="OpenJDK Runtime Environment"/>
++    <property name="java.vm.version" value="26.0.1+8-2-26.04.2-Ubuntu"/>
++    <property name="sun.boot.library.path" value="/usr/lib/jvm/java-26-openjdk-amd64/lib"/>
++    <property name="maven.multiModuleProjectDirectory" value="/home/linus/Documents/Learning-Java/practica5"/>
++    <property name="java.vm.vendor" value="Ubuntu"/>
++    <property name="java.vendor.url" value="https://ubuntu.com/"/>
++    <property name="guice.disable.misplaced.annotation.check" value="true"/>
++    <property name="path.separator" value=":"/>
++    <property name="java.vm.name" value="OpenJDK 64-Bit Server VM"/>
++    <property name="user.country" value="US"/>
++    <property name="sun.java.launcher" value="SUN_STANDARD"/>
++    <property name="stdin.encoding" value="UTF-8"/>
++    <property name="java.vm.specification.name" value="Java Virtual Machine Specification"/>
++    <property name="user.dir" value="/home/linus/Documents/Learning-Java/practica5"/>
++    <property name="java.vm.compressedOopsMode" value="32-bit"/>
++    <property name="java.runtime.version" value="26.0.1+8-2-26.04.2-Ubuntu"/>
++    <property name="os.arch" value="amd64"/>
++    <property name="java.io.tmpdir" value="/tmp"/>
++    <property name="line.separator" value="&#10;"/>
++    <property name="java.vm.specification.vendor" value="Oracle Corporation"/>
++    <property name="stderr.encoding" value="UTF-8"/>
++    <property name="os.name" value="Linux"/>
++    <property name="guice_custom_class_loading" value="CHILD"/>
++    <property name="classworlds.conf" value="/usr/share/maven/bin/m2.conf"/>
++    <property name="sun.jnu.encoding" value="UTF-8"/>
++    <property name="stdout.encoding" value="UTF-8"/>
++    <property name="java.library.path" value="/usr/java/packages/lib:/usr/lib/x86_64-linux-gnu/jni:/lib/x86_64-linux-gnu:/usr/lib/x86_64-linux-gnu:/usr/lib/jni:/lib:/usr/lib"/>
++    <property name="maven.conf" value="/usr/share/maven/conf"/>
++    <property name="jdk.debug" value="release"/>
++    <property name="java.class.version" value="70.0"/>
++    <property name="java.specification.name" value="Java Platform API Specification"/>
++    <property name="sun.management.compiler" value="HotSpot 64-Bit Tiered Compilers"/>
++    <property name="os.version" value="7.0.0-30-generic"/>
++    <property name="library.jansi.path" value="/usr/share/maven/lib/jansi-native"/>
++    <property name="user.home" value="/home/linus"/>
++    <property name="user.timezone" value="America/Mexico_City"/>
++    <property name="file.encoding" value="UTF-8"/>
++    <property name="java.specification.version" value="26"/>
++    <property name="user.name" value="linus"/>
++    <property name="java.class.path" value="/usr/share/maven/boot/plexus-classworlds-2.x.jar"/>
++    <property name="java.vm.specification.version" value="26"/>
++    <property name="sun.arch.data.model" value="64"/>
++    <property name="sun.java.command" value="org.codehaus.plexus.classworlds.launcher.Launcher test"/>
++    <property name="java.home" value="/usr/lib/jvm/java-26-openjdk-amd64"/>
++    <property name="user.language" value="en"/>
++    <property name="java.specification.vendor" value="Oracle Corporation"/>
++    <property name="java.vm.info" value="mixed mode, sharing"/>
++    <property name="java.version" value="26.0.1"/>
++    <property name="native.encoding" value="UTF-8"/>
++    <property name="java.vendor" value="Ubuntu"/>
++    <property name="maven.home" value="/usr/share/maven"/>
++    <property name="file.separator" value="/"/>
++    <property name="java.version.date" value="2026-04-21"/>
++    <property name="java.vendor.url.bug" value="https://bugs.launchpad.net/ubuntu/+source/openjdk-26"/>
++    <property name="sun.io.unicode.encoding" value="UnicodeLittle"/>
++    <property name="sun.cpu.endian" value="little"/>
++  </properties>
++  <testcase name="testCarga" classname="mx.unam.ciencias.icc.test.TestBaseDeDatosEstudiantes" time="0.036"/>
++  <testcase name="testAgregaRegistro" classname="mx.unam.ciencias.icc.test.TestBaseDeDatosEstudiantes" time="0"/>
++  <testcase name="testEliminaRegistro" classname="mx.unam.ciencias.icc.test.TestBaseDeDatosEstudiantes" time="0.004"/>
++  <testcase name="testCreaRegistro" classname="mx.unam.ciencias.icc.test.TestBaseDeDatosEstudiantes" time="0.001"/>
++  <testcase name="testGetNumRegistros" classname="mx.unam.ciencias.icc.test.TestBaseDeDatosEstudiantes" time="0.001"/>
++  <testcase name="testGetRegistros" classname="mx.unam.ciencias.icc.test.TestBaseDeDatosEstudiantes" time="0.001"/>
++  <testcase name="testBuscaRegistros" classname="mx.unam.ciencias.icc.test.TestBaseDeDatosEstudiantes" time="0.002"/>
++  <testcase name="testGuarda" classname="mx.unam.ciencias.icc.test.TestBaseDeDatosEstudiantes" time="0.008"/>
++  <testcase name="testLimpia" classname="mx.unam.ciencias.icc.test.TestBaseDeDatosEstudiantes" time="0.001"/>
++  <testcase name="testConstructor" classname="mx.unam.ciencias.icc.test.TestBaseDeDatosEstudiantes" time="0.001"/>
++</testsuite>
+\ No newline at end of file
+diff --git a/practica5/target/surefire-reports/TEST-mx.unam.ciencias.icc.test.TestCampoEstudiante.xml b/practica5/target/surefire-reports/TEST-mx.unam.ciencias.icc.test.TestCampoEstudiante.xml
+new file mode 100644
+index 0000000..9f7b96d
+--- /dev/null
++++ b/practica5/target/surefire-reports/TEST-mx.unam.ciencias.icc.test.TestCampoEstudiante.xml
+@@ -0,0 +1,63 @@
++<?xml version="1.0" encoding="UTF-8"?>
++<testsuite name="mx.unam.ciencias.icc.test.TestCampoEstudiante" time="0" tests="1" errors="0" skipped="0" failures="0">
++  <properties>
++    <property name="jansi.mode" value="force"/>
++    <property name="java.runtime.name" value="OpenJDK Runtime Environment"/>
++    <property name="java.vm.version" value="26.0.1+8-2-26.04.2-Ubuntu"/>
++    <property name="sun.boot.library.path" value="/usr/lib/jvm/java-26-openjdk-amd64/lib"/>
++    <property name="maven.multiModuleProjectDirectory" value="/home/linus/Documents/Learning-Java/practica5"/>
++    <property name="java.vm.vendor" value="Ubuntu"/>
++    <property name="java.vendor.url" value="https://ubuntu.com/"/>
++    <property name="guice.disable.misplaced.annotation.check" value="true"/>
++    <property name="path.separator" value=":"/>
++    <property name="java.vm.name" value="OpenJDK 64-Bit Server VM"/>
++    <property name="user.country" value="US"/>
++    <property name="sun.java.launcher" value="SUN_STANDARD"/>
++    <property name="stdin.encoding" value="UTF-8"/>
++    <property name="java.vm.specification.name" value="Java Virtual Machine Specification"/>
++    <property name="user.dir" value="/home/linus/Documents/Learning-Java/practica5"/>
++    <property name="java.vm.compressedOopsMode" value="32-bit"/>
++    <property name="java.runtime.version" value="26.0.1+8-2-26.04.2-Ubuntu"/>
++    <property name="os.arch" value="amd64"/>
++    <property name="java.io.tmpdir" value="/tmp"/>
++    <property name="line.separator" value="&#10;"/>
++    <property name="java.vm.specification.vendor" value="Oracle Corporation"/>
++    <property name="stderr.encoding" value="UTF-8"/>
++    <property name="os.name" value="Linux"/>
++    <property name="guice_custom_class_loading" value="CHILD"/>
++    <property name="classworlds.conf" value="/usr/share/maven/bin/m2.conf"/>
++    <property name="sun.jnu.encoding" value="UTF-8"/>
++    <property name="stdout.encoding" value="UTF-8"/>
++    <property name="java.library.path" value="/usr/java/packages/lib:/usr/lib/x86_64-linux-gnu/jni:/lib/x86_64-linux-gnu:/usr/lib/x86_64-linux-gnu:/usr/lib/jni:/lib:/usr/lib"/>
++    <property name="maven.conf" value="/usr/share/maven/conf"/>
++    <property name="jdk.debug" value="release"/>
++    <property name="java.class.version" value="70.0"/>
++    <property name="java.specification.name" value="Java Platform API Specification"/>
++    <property name="sun.management.compiler" value="HotSpot 64-Bit Tiered Compilers"/>
++    <property name="os.version" value="7.0.0-30-generic"/>
++    <property name="library.jansi.path" value="/usr/share/maven/lib/jansi-native"/>
++    <property name="user.home" value="/home/linus"/>
++    <property name="user.timezone" value="America/Mexico_City"/>
++    <property name="file.encoding" value="UTF-8"/>
++    <property name="java.specification.version" value="26"/>
++    <property name="user.name" value="linus"/>
++    <property name="java.class.path" value="/usr/share/maven/boot/plexus-classworlds-2.x.jar"/>
++    <property name="java.vm.specification.version" value="26"/>
++    <property name="sun.arch.data.model" value="64"/>
++    <property name="sun.java.command" value="org.codehaus.plexus.classworlds.launcher.Launcher test"/>
++    <property name="java.home" value="/usr/lib/jvm/java-26-openjdk-amd64"/>
++    <property name="user.language" value="en"/>
++    <property name="java.specification.vendor" value="Oracle Corporation"/>
++    <property name="java.vm.info" value="mixed mode, sharing"/>
++    <property name="java.version" value="26.0.1"/>
++    <property name="native.encoding" value="UTF-8"/>
++    <property name="java.vendor" value="Ubuntu"/>
++    <property name="maven.home" value="/usr/share/maven"/>
++    <property name="file.separator" value="/"/>
++    <property name="java.version.date" value="2026-04-21"/>
++    <property name="java.vendor.url.bug" value="https://bugs.launchpad.net/ubuntu/+source/openjdk-26"/>
++    <property name="sun.io.unicode.encoding" value="UnicodeLittle"/>
++    <property name="sun.cpu.endian" value="little"/>
++  </properties>
++  <testcase name="testToString" classname="mx.unam.ciencias.icc.test.TestCampoEstudiante" time="0"/>
++</testsuite>
+\ No newline at end of file
+diff --git a/practica5/target/surefire-reports/TEST-mx.unam.ciencias.icc.test.TestEstudiante.xml b/practica5/target/surefire-reports/TEST-mx.unam.ciencias.icc.test.TestEstudiante.xml
+new file mode 100644
+index 0000000..325db58
+--- /dev/null
++++ b/practica5/target/surefire-reports/TEST-mx.unam.ciencias.icc.test.TestEstudiante.xml
+@@ -0,0 +1,76 @@
++<?xml version="1.0" encoding="UTF-8"?>
++<testsuite name="mx.unam.ciencias.icc.test.TestEstudiante" time="0.017" tests="14" errors="0" skipped="0" failures="0">
++  <properties>
++    <property name="jansi.mode" value="force"/>
++    <property name="java.runtime.name" value="OpenJDK Runtime Environment"/>
++    <property name="java.vm.version" value="26.0.1+8-2-26.04.2-Ubuntu"/>
++    <property name="sun.boot.library.path" value="/usr/lib/jvm/java-26-openjdk-amd64/lib"/>
++    <property name="maven.multiModuleProjectDirectory" value="/home/linus/Documents/Learning-Java/practica5"/>
++    <property name="java.vm.vendor" value="Ubuntu"/>
++    <property name="java.vendor.url" value="https://ubuntu.com/"/>
++    <property name="guice.disable.misplaced.annotation.check" value="true"/>
++    <property name="path.separator" value=":"/>
++    <property name="java.vm.name" value="OpenJDK 64-Bit Server VM"/>
++    <property name="user.country" value="US"/>
++    <property name="sun.java.launcher" value="SUN_STANDARD"/>
++    <property name="stdin.encoding" value="UTF-8"/>
++    <property name="java.vm.specification.name" value="Java Virtual Machine Specification"/>
++    <property name="user.dir" value="/home/linus/Documents/Learning-Java/practica5"/>
++    <property name="java.vm.compressedOopsMode" value="32-bit"/>
++    <property name="java.runtime.version" value="26.0.1+8-2-26.04.2-Ubuntu"/>
++    <property name="os.arch" value="amd64"/>
++    <property name="java.io.tmpdir" value="/tmp"/>
++    <property name="line.separator" value="&#10;"/>
++    <property name="java.vm.specification.vendor" value="Oracle Corporation"/>
++    <property name="stderr.encoding" value="UTF-8"/>
++    <property name="os.name" value="Linux"/>
++    <property name="guice_custom_class_loading" value="CHILD"/>
++    <property name="classworlds.conf" value="/usr/share/maven/bin/m2.conf"/>
++    <property name="sun.jnu.encoding" value="UTF-8"/>
++    <property name="stdout.encoding" value="UTF-8"/>
++    <property name="java.library.path" value="/usr/java/packages/lib:/usr/lib/x86_64-linux-gnu/jni:/lib/x86_64-linux-gnu:/usr/lib/x86_64-linux-gnu:/usr/lib/jni:/lib:/usr/lib"/>
++    <property name="maven.conf" value="/usr/share/maven/conf"/>
++    <property name="jdk.debug" value="release"/>
++    <property name="java.class.version" value="70.0"/>
++    <property name="java.specification.name" value="Java Platform API Specification"/>
++    <property name="sun.management.compiler" value="HotSpot 64-Bit Tiered Compilers"/>
++    <property name="os.version" value="7.0.0-30-generic"/>
++    <property name="library.jansi.path" value="/usr/share/maven/lib/jansi-native"/>
++    <property name="user.home" value="/home/linus"/>
++    <property name="user.timezone" value="America/Mexico_City"/>
++    <property name="file.encoding" value="UTF-8"/>
++    <property name="java.specification.version" value="26"/>
++    <property name="user.name" value="linus"/>
++    <property name="java.class.path" value="/usr/share/maven/boot/plexus-classworlds-2.x.jar"/>
++    <property name="java.vm.specification.version" value="26"/>
++    <property name="sun.arch.data.model" value="64"/>
++    <property name="sun.java.command" value="org.codehaus.plexus.classworlds.launcher.Launcher test"/>
++    <property name="java.home" value="/usr/lib/jvm/java-26-openjdk-amd64"/>
++    <property name="user.language" value="en"/>
++    <property name="java.specification.vendor" value="Oracle Corporation"/>
++    <property name="java.vm.info" value="mixed mode, sharing"/>
++    <property name="java.version" value="26.0.1"/>
++    <property name="native.encoding" value="UTF-8"/>
++    <property name="java.vendor" value="Ubuntu"/>
++    <property name="maven.home" value="/usr/share/maven"/>
++    <property name="file.separator" value="/"/>
++    <property name="java.version.date" value="2026-04-21"/>
++    <property name="java.vendor.url.bug" value="https://bugs.launchpad.net/ubuntu/+source/openjdk-26"/>
++    <property name="sun.io.unicode.encoding" value="UnicodeLittle"/>
++    <property name="sun.cpu.endian" value="little"/>
++  </properties>
++  <testcase name="testSeria" classname="mx.unam.ciencias.icc.test.TestEstudiante" time="0.002"/>
++  <testcase name="testCasa" classname="mx.unam.ciencias.icc.test.TestEstudiante" time="0.001"/>
++  <testcase name="testToString" classname="mx.unam.ciencias.icc.test.TestEstudiante" time="0.004"/>
++  <testcase name="testGetEdad" classname="mx.unam.ciencias.icc.test.TestEstudiante" time="0.001"/>
++  <testcase name="testSetPromedio" classname="mx.unam.ciencias.icc.test.TestEstudiante" time="0.001"/>
++  <testcase name="testGetPromedio" classname="mx.unam.ciencias.icc.test.TestEstudiante" time="0.001"/>
++  <testcase name="testSetCuenta" classname="mx.unam.ciencias.icc.test.TestEstudiante" time="0.001"/>
++  <testcase name="testGetCuenta" classname="mx.unam.ciencias.icc.test.TestEstudiante" time="0.001"/>
++  <testcase name="testSetNombre" classname="mx.unam.ciencias.icc.test.TestEstudiante" time="0.001"/>
++  <testcase name="testDeseria" classname="mx.unam.ciencias.icc.test.TestEstudiante" time="0.002"/>
++  <testcase name="testEquals" classname="mx.unam.ciencias.icc.test.TestEstudiante" time="0"/>
++  <testcase name="testGetNombre" classname="mx.unam.ciencias.icc.test.TestEstudiante" time="0.001"/>
++  <testcase name="testSetEdad" classname="mx.unam.ciencias.icc.test.TestEstudiante" time="0.001"/>
++  <testcase name="testConstructor" classname="mx.unam.ciencias.icc.test.TestEstudiante" time="0"/>
++</testsuite>
+\ No newline at end of file
+diff --git a/practica5/target/surefire-reports/TEST-mx.unam.ciencias.icc.test.TestLista.xml b/practica5/target/surefire-reports/TEST-mx.unam.ciencias.icc.test.TestLista.xml
+new file mode 100644
+index 0000000..f5bf0e1
+--- /dev/null
++++ b/practica5/target/surefire-reports/TEST-mx.unam.ciencias.icc.test.TestLista.xml
+@@ -0,0 +1,83 @@
++<?xml version="1.0" encoding="UTF-8"?>
++<testsuite name="mx.unam.ciencias.icc.test.TestLista" time="0.037" tests="21" errors="0" skipped="0" failures="0">
++  <properties>
++    <property name="jansi.mode" value="force"/>
++    <property name="java.runtime.name" value="OpenJDK Runtime Environment"/>
++    <property name="java.vm.version" value="26.0.1+8-2-26.04.2-Ubuntu"/>
++    <property name="sun.boot.library.path" value="/usr/lib/jvm/java-26-openjdk-amd64/lib"/>
++    <property name="maven.multiModuleProjectDirectory" value="/home/linus/Documents/Learning-Java/practica5"/>
++    <property name="java.vm.vendor" value="Ubuntu"/>
++    <property name="java.vendor.url" value="https://ubuntu.com/"/>
++    <property name="guice.disable.misplaced.annotation.check" value="true"/>
++    <property name="path.separator" value=":"/>
++    <property name="java.vm.name" value="OpenJDK 64-Bit Server VM"/>
++    <property name="user.country" value="US"/>
++    <property name="sun.java.launcher" value="SUN_STANDARD"/>
++    <property name="stdin.encoding" value="UTF-8"/>
++    <property name="java.vm.specification.name" value="Java Virtual Machine Specification"/>
++    <property name="user.dir" value="/home/linus/Documents/Learning-Java/practica5"/>
++    <property name="java.vm.compressedOopsMode" value="32-bit"/>
++    <property name="java.runtime.version" value="26.0.1+8-2-26.04.2-Ubuntu"/>
++    <property name="os.arch" value="amd64"/>
++    <property name="java.io.tmpdir" value="/tmp"/>
++    <property name="line.separator" value="&#10;"/>
++    <property name="java.vm.specification.vendor" value="Oracle Corporation"/>
++    <property name="stderr.encoding" value="UTF-8"/>
++    <property name="os.name" value="Linux"/>
++    <property name="guice_custom_class_loading" value="CHILD"/>
++    <property name="classworlds.conf" value="/usr/share/maven/bin/m2.conf"/>
++    <property name="sun.jnu.encoding" value="UTF-8"/>
++    <property name="stdout.encoding" value="UTF-8"/>
++    <property name="java.library.path" value="/usr/java/packages/lib:/usr/lib/x86_64-linux-gnu/jni:/lib/x86_64-linux-gnu:/usr/lib/x86_64-linux-gnu:/usr/lib/jni:/lib:/usr/lib"/>
++    <property name="maven.conf" value="/usr/share/maven/conf"/>
++    <property name="jdk.debug" value="release"/>
++    <property name="java.class.version" value="70.0"/>
++    <property name="java.specification.name" value="Java Platform API Specification"/>
++    <property name="sun.management.compiler" value="HotSpot 64-Bit Tiered Compilers"/>
++    <property name="os.version" value="7.0.0-30-generic"/>
++    <property name="library.jansi.path" value="/usr/share/maven/lib/jansi-native"/>
++    <property name="user.home" value="/home/linus"/>
++    <property name="user.timezone" value="America/Mexico_City"/>
++    <property name="file.encoding" value="UTF-8"/>
++    <property name="java.specification.version" value="26"/>
++    <property name="user.name" value="linus"/>
++    <property name="java.class.path" value="/usr/share/maven/boot/plexus-classworlds-2.x.jar"/>
++    <property name="java.vm.specification.version" value="26"/>
++    <property name="sun.arch.data.model" value="64"/>
++    <property name="sun.java.command" value="org.codehaus.plexus.classworlds.launcher.Launcher test"/>
++    <property name="java.home" value="/usr/lib/jvm/java-26-openjdk-amd64"/>
++    <property name="user.language" value="en"/>
++    <property name="java.specification.vendor" value="Oracle Corporation"/>
++    <property name="java.vm.info" value="mixed mode, sharing"/>
++    <property name="java.version" value="26.0.1"/>
++    <property name="native.encoding" value="UTF-8"/>
++    <property name="java.vendor" value="Ubuntu"/>
++    <property name="maven.home" value="/usr/share/maven"/>
++    <property name="file.separator" value="/"/>
++    <property name="java.version.date" value="2026-04-21"/>
++    <property name="java.vendor.url.bug" value="https://bugs.launchpad.net/ubuntu/+source/openjdk-26"/>
++    <property name="sun.io.unicode.encoding" value="UnicodeLittle"/>
++    <property name="sun.cpu.endian" value="little"/>
++  </properties>
++  <testcase name="testAgregaFinal" classname="mx.unam.ciencias.icc.test.TestLista" time="0.004"/>
++  <testcase name="testElimina" classname="mx.unam.ciencias.icc.test.TestLista" time="0.001"/>
++  <testcase name="testEsVacia" classname="mx.unam.ciencias.icc.test.TestLista" time="0.001"/>
++  <testcase name="testEliminaPrimero" classname="mx.unam.ciencias.icc.test.TestLista" time="0.001"/>
++  <testcase name="testGet" classname="mx.unam.ciencias.icc.test.TestLista" time="0"/>
++  <testcase name="testAgregaInicio" classname="mx.unam.ciencias.icc.test.TestLista" time="0.001"/>
++  <testcase name="testCopia" classname="mx.unam.ciencias.icc.test.TestLista" time="0.001"/>
++  <testcase name="testToString" classname="mx.unam.ciencias.icc.test.TestLista" time="0.009"/>
++  <testcase name="testGetLongitud" classname="mx.unam.ciencias.icc.test.TestLista" time="0.001"/>
++  <testcase name="testGetRabo" classname="mx.unam.ciencias.icc.test.TestLista" time="0.001"/>
++  <testcase name="testEliminaUltimo" classname="mx.unam.ciencias.icc.test.TestLista" time="0.002"/>
++  <testcase name="testGetPrimero" classname="mx.unam.ciencias.icc.test.TestLista" time="0.003"/>
++  <testcase name="testContiene" classname="mx.unam.ciencias.icc.test.TestLista" time="0.001"/>
++  <testcase name="testReversa" classname="mx.unam.ciencias.icc.test.TestLista" time="0.001"/>
++  <testcase name="testIndiceDe" classname="mx.unam.ciencias.icc.test.TestLista" time="0.001"/>
++  <testcase name="testGetCabeza" classname="mx.unam.ciencias.icc.test.TestLista" time="0.001"/>
++  <testcase name="testEquals" classname="mx.unam.ciencias.icc.test.TestLista" time="0.001"/>
++  <testcase name="testLimpia" classname="mx.unam.ciencias.icc.test.TestLista" time="0.001"/>
++  <testcase name="testGetUltimo" classname="mx.unam.ciencias.icc.test.TestLista" time="0.001"/>
++  <testcase name="testInserta" classname="mx.unam.ciencias.icc.test.TestLista" time="0.005"/>
++  <testcase name="testConstructor" classname="mx.unam.ciencias.icc.test.TestLista" time="0"/>
++</testsuite>
+\ No newline at end of file
+diff --git a/practica5/target/surefire-reports/mx.unam.ciencias.icc.test.TestBaseDeDatosEstudiantes.txt b/practica5/target/surefire-reports/mx.unam.ciencias.icc.test.TestBaseDeDatosEstudiantes.txt
+new file mode 100644
+index 0000000..e96180e
+--- /dev/null
++++ b/practica5/target/surefire-reports/mx.unam.ciencias.icc.test.TestBaseDeDatosEstudiantes.txt
+@@ -0,0 +1,4 @@
++-------------------------------------------------------------------------------
++Test set: mx.unam.ciencias.icc.test.TestBaseDeDatosEstudiantes
++-------------------------------------------------------------------------------
++Tests run: 10, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.132 sec - in mx.unam.ciencias.icc.test.TestBaseDeDatosEstudiantes
+diff --git a/practica5/target/surefire-reports/mx.unam.ciencias.icc.test.TestCampoEstudiante.txt b/practica5/target/surefire-reports/mx.unam.ciencias.icc.test.TestCampoEstudiante.txt
+new file mode 100644
+index 0000000..39c0b93
+--- /dev/null
++++ b/practica5/target/surefire-reports/mx.unam.ciencias.icc.test.TestCampoEstudiante.txt
+@@ -0,0 +1,4 @@
++-------------------------------------------------------------------------------
++Test set: mx.unam.ciencias.icc.test.TestCampoEstudiante
++-------------------------------------------------------------------------------
++Tests run: 1, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0 sec - in mx.unam.ciencias.icc.test.TestCampoEstudiante
+diff --git a/practica5/target/surefire-reports/mx.unam.ciencias.icc.test.TestEstudiante.txt b/practica5/target/surefire-reports/mx.unam.ciencias.icc.test.TestEstudiante.txt
+new file mode 100644
+index 0000000..1f90adb
+--- /dev/null
++++ b/practica5/target/surefire-reports/mx.unam.ciencias.icc.test.TestEstudiante.txt
+@@ -0,0 +1,4 @@
++-------------------------------------------------------------------------------
++Test set: mx.unam.ciencias.icc.test.TestEstudiante
++-------------------------------------------------------------------------------
++Tests run: 14, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.018 sec - in mx.unam.ciencias.icc.test.TestEstudiante
+diff --git a/practica5/target/surefire-reports/mx.unam.ciencias.icc.test.TestLista.txt b/practica5/target/surefire-reports/mx.unam.ciencias.icc.test.TestLista.txt
+new file mode 100644
+index 0000000..344d5cd
+--- /dev/null
++++ b/practica5/target/surefire-reports/mx.unam.ciencias.icc.test.TestLista.txt
+@@ -0,0 +1,4 @@
++-------------------------------------------------------------------------------
++Test set: mx.unam.ciencias.icc.test.TestLista
++-------------------------------------------------------------------------------
++Tests run: 21, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.041 sec - in mx.unam.ciencias.icc.test.TestLista
