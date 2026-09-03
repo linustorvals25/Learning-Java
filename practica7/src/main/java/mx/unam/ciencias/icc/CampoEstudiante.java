@@ -20,6 +20,13 @@ public enum CampoEstudiante {
      * @return una representación en cadena del campo.
      */
     @Override public String toString() {
-        // Aquí va su código.
+        switch (this) {
+            case NOMBRE: return "Nombre";
+            case CUENTA: return "# Cuenta";
+            case PROMEDIO: return "Promedio";
+            case EDAD: return "EDAD";
+            default:
+                    throw new IllegalArgumentException("Error en el toString() de CampoEstudiante.");
+        }
     }
 }
