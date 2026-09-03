@@ -29,7 +29,10 @@ public class Estudiante implements Registro<Estudiante, CampoEstudiante> {
                       int    cuenta,
                       double promedio,
                       int    edad) {
-        // Aquí va su código.
+        this.nombre = nombre;
+        this.cuenta = cuenta;
+        this.promedio = promedio;
+        this.edad = edad;
     }
 
     /**
@@ -37,7 +40,7 @@ public class Estudiante implements Registro<Estudiante, CampoEstudiante> {
      * @return el nombre del estudiante.
      */
     public String getNombre() {
-        // Aquí va su código.
+        return nombre;
     }
 
     /**
@@ -45,7 +48,7 @@ public class Estudiante implements Registro<Estudiante, CampoEstudiante> {
      * @param nombre el nuevo nombre del estudiante.
      */
     public void setNombre(String nombre) {
-        // Aquí va su código.
+        this.nombre = nombre;
     }
 
     /**
@@ -53,7 +56,7 @@ public class Estudiante implements Registro<Estudiante, CampoEstudiante> {
      * @return el número de cuenta del estudiante.
      */
     public int getCuenta() {
-        // Aquí va su código.
+        return cuenta;
     }
 
     /**
@@ -61,7 +64,7 @@ public class Estudiante implements Registro<Estudiante, CampoEstudiante> {
      * @param cuenta el nuevo número de cuenta del estudiante.
      */
     public void setCuenta(int cuenta) {
-        // Aquí va su código.
+        this.cuenta = cuenta;   
     }
 
     /**
@@ -69,7 +72,7 @@ public class Estudiante implements Registro<Estudiante, CampoEstudiante> {
      * @return el promedio del estudiante.
      */
     public double getPromedio() {
-        // Aquí va su código.
+        return promedio;
     }
 
     /**
@@ -77,7 +80,7 @@ public class Estudiante implements Registro<Estudiante, CampoEstudiante> {
      * @param promedio el nuevo promedio del estudiante.
      */
     public void setPromedio(double promedio) {
-        // Aquí va su código.
+        this.promedio = promedio;
     }
 
     /**
@@ -85,7 +88,7 @@ public class Estudiante implements Registro<Estudiante, CampoEstudiante> {
      * @return la edad del estudiante.
      */
     public int getEdad() {
-        // Aquí va su código.
+        return edad;
     }
 
     /**
@@ -93,7 +96,7 @@ public class Estudiante implements Registro<Estudiante, CampoEstudiante> {
      * @param edad la nueva edad del estudiante.
      */
     public void setEdad(int edad) {
-        // Aquí va su código.
+        this.edad = edad;
     }
 
     /**
@@ -101,7 +104,11 @@ public class Estudiante implements Registro<Estudiante, CampoEstudiante> {
      * @return una representación en cadena del estudiante.
      */
     @Override public String toString() {
-        // Aquí va su código.
+        return String.format("Nombre   : %s\n" + 
+                             "Cuenta   : %09d\n" +
+                             "Promedio : %2.2f\n" +
+                             "Edad     : %d", 
+                             nombre, cuenta, promedio, edad);
     }
 
     /**
@@ -116,7 +123,10 @@ public class Estudiante implements Registro<Estudiante, CampoEstudiante> {
         if (!(objeto instanceof Estudiante))
             return false;
         Estudiante estudiante = (Estudiante)objeto;
-        // Aquí va su código.
+        return nombre.equals(estudiante.nombre) &&
+               cuenta == estudiante.cuenta &&
+               promedio == estudiante.promedio &&
+               edad == estudiante.edad;
     }
 
     /**
@@ -126,7 +136,7 @@ public class Estudiante implements Registro<Estudiante, CampoEstudiante> {
      * @return la seriación del estudiante en una línea de texto.
      */
     @Override public String seria() {
-        // Aquí va su código.
+        return String.format("%s\t%d\t%2.2f\t%d\n", nombre, cuenta, promedio, edad);
     }
 
     /**
@@ -138,7 +148,20 @@ public class Estudiante implements Registro<Estudiante, CampoEstudiante> {
      *         es una seriación válida de un estudiante.
      */
     @Override public void deseria(String linea) {
-        // Aquí va su código.
+        final String MSJ_ERROR = "La linea recibia no cumple con el formato de de-serializacion.";
+        if (linea == null || linea.isEmpty())
+            throw new ExcepcionLineaInvalida(MSJ_ERROR);
+        String[] datos = linea.trim().split("\t");
+        if (datos.length != 4)
+            throw new ExcepcionLineaInvalida(MSJ_ERROR);
+        try {
+            nombre = datos[0];
+            cuenta = Integer.parseInt(datos[1]);
+            promedio = Double.parseDouble(datos[2]);
+            edad = Integer.parseInt(datos[3]);
+        } catch (NumberFormatException nfe) {
+            throw new ExcepcionLineaInvalida(MSJ_ERROR);
+        }
     }
 
     /**
@@ -147,7 +170,12 @@ public class Estudiante implements Registro<Estudiante, CampoEstudiante> {
      * @throws IllegalArgumentException si el estudiante es <code>null</code>.
      */
     @Override public void actualiza(Estudiante estudiante) {
-        // Aquí va su código.
+        if (estudiante == null)
+            throw new IllegalArgumentException("El objeto de tipo Estudiante recibido es null.");
+        nombre = estudiante.nombre;
+        cuenta = estudiante.cuenta;
+        promedio = estudiante.promedio;
+        edad = estudiante.edad;
     }
 
     /**
@@ -176,6 +204,34 @@ public class Estudiante implements Registro<Estudiante, CampoEstudiante> {
      * @throws IllegalArgumentException si el campo es <code>null</code>.
      */
     @Override public boolean casa(CampoEstudiante campo, Object valor) {
-        // Aquí va su código.
+        if (campo == null)
+            throw new IllegalArgumentException("El objeto de tipo CampoEstudiante es null");
+        if (valor == null)
+            return false;
+        switch (campo) {
+            case NOMBRE:
+                if (valor instanceof String) {
+                    String str = (String) valor;
+                    return !str.isEmpty() && nombre.indexOf(str) != -1;
+                }
+                return false;
+            case CUENTA:
+                if (valor instanceof Integer) {
+                    return ((Integer) valor) <= cuenta;
+                }
+                return false;
+            case PROMEDIO:
+                if (valor instanceof Double) {
+                    return ((Double) valor) <= promedio;
+                }
+                return false;
+            case EDAD:
+                if (valor instanceof Integer) {
+                    return ((Integer) valor) <= edad;
+                }
+                return false;
+            default:
+                return false;
+        }
     }
 }
