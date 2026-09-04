@@ -24,9 +24,9 @@ public enum CampoEstudiante {
             case NOMBRE: return "Nombre";
             case CUENTA: return "# Cuenta";
             case PROMEDIO: return "Promedio";
-            case EDAD: return "EDAD";
+            case EDAD: return "Edad";
             default:
-                    throw new IllegalArgumentException("Error en el toString() de CampoEstudiante.");
+                throw new IllegalArgumentException("Error en el toString() de CampoEstudiante.");
         }
     }
 }

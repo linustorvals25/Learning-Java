@@ -214,7 +214,7 @@ public class Lista<T> implements Iterable<T> {
             return;
         }
         elim.anterior.siguiente = elim.siguiente;
-        emin.siguiente.anterior = elim.anterior;
+        elim.siguiente.anterior = elim.anterior;
         longitud--;
     }
 

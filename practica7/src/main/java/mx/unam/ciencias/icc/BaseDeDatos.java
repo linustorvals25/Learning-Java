@@ -3,6 +3,7 @@ package mx.unam.ciencias.icc;
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.IOException;
+import java.util.Iterator;
 
 /**
  * Clase abstracta para bases de datos genéricas. Provee métodos para agregar y
@@ -27,7 +28,7 @@ public abstract class BaseDeDatos<R extends Registro<R, C>, C extends Enum> {
      * Constructor único.
      */
     public BaseDeDatos() {
-        // Aquí va su código.
+        registros = new Lista<>();
     }
 
     /**
@@ -35,7 +36,7 @@ public abstract class BaseDeDatos<R extends Registro<R, C>, C extends Enum> {
      * @return el número de registros en la base de datos.
      */
     public int getNumRegistros() {
-        // Aquí va su código.
+        return registros.getLongitud();
     }
 
     /**
@@ -44,7 +45,7 @@ public abstract class BaseDeDatos<R extends Registro<R, C>, C extends Enum> {
      * @return una lista con los registros en la base de datos.
      */
     public Lista<R> getRegistros() {
-        // Aquí va su código.
+        return registros.copia();
     }
 
     /**
@@ -52,7 +53,7 @@ public abstract class BaseDeDatos<R extends Registro<R, C>, C extends Enum> {
      * @param registro el registro que hay que agregar a la base de datos.
      */
     public void agregaRegistro(R registro) {
-        // Aquí va su código.
+        registros.agregaFinal(registro);;
     }
 
     /**
@@ -60,14 +61,14 @@ public abstract class BaseDeDatos<R extends Registro<R, C>, C extends Enum> {
      * @param registro el registro que hay que eliminar de la base de datos.
      */
     public void eliminaRegistro(R registro) {
-        // Aquí va su código.
+        registros.elimina(registro);
     }
 
     /**
      * Limpia la base de datos.
      */
     public void limpia() {
-        // Aquí va su código.
+        registros.limpia();
     }
 
     /**
@@ -76,7 +77,10 @@ public abstract class BaseDeDatos<R extends Registro<R, C>, C extends Enum> {
      * @throws IOException si ocurre un error de entrada/salida.
      */
     public void guarda(BufferedWriter out) throws IOException {
-        // Aquí va su código.
+        Iterator<R> it = registros.iterator();
+        while (it.hasNext()) {
+            out.append(it.next().seria());
+        }
     }
 
     /**
@@ -87,7 +91,17 @@ public abstract class BaseDeDatos<R extends Registro<R, C>, C extends Enum> {
      * @throws IOException si ocurre un error de entrada/salida.
      */
     public void carga(BufferedReader in) throws IOException {
-        // Aquí va su código.
+        limpia();
+        String linea = "";
+        while ((linea = in.readLine()) != null) {
+            R r = creaRegistro();
+            try {
+                r.deseria(linea);
+            } catch (ExcepcionLineaInvalida eli) {
+                return;
+            }
+            registros.agregaFinal(r);
+        }
     }
 
     /**
@@ -100,7 +114,16 @@ public abstract class BaseDeDatos<R extends Registro<R, C>, C extends Enum> {
      *         correcta.
      */
     public Lista<R> buscaRegistros(C campo, Object valor) {
-        // Aquí va su código.
+        if (campo == null || !(campo instanceof Enum))
+            throw new IllegalArgumentException("El campo recibido no es instancia de C");
+        Lista<R> casa = new Lista<>();
+        Iterator<R> it = registros.iterator();
+        while (it.hasNext()) {
+            R r = it.next();
+            if (r.casa(campo, valor))
+                casa.agregaFinal(r);
+        }
+        return casa;
     }
 
     /**
