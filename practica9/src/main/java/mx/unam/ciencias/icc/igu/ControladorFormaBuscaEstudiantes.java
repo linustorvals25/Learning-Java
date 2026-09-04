@@ -74,7 +74,11 @@ public class ControladorFormaBuscaEstudiantes
      */
     public Object getValor() {
         switch (opcionesCampo.getValue()) {
-            // Aquí va su código.
+        case NOMBRE: return entradaValor.getText();
+        case CUENTA: return Integer.valueOf(entradaValor.getText());
+        case PROMEDIO: return Double.valueOf(entradaValor.getText());
+        case EDAD: return Integer.valueOf(entradaValor.getText());
+        default: throw new AssertionError();
         }
     }
 

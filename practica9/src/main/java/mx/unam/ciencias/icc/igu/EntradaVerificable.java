@@ -22,7 +22,9 @@ public class EntradaVerificable extends TextField {
      * @param verificador el nuevo verificador de la entrada.
      */
     public void setVerificador(Verificador verificador) {
-        // Aquí va su código.
+        if (verificador == null)
+            throw new IllegalArgumentException();
+        this.verificador = verificador;
     }
 
     /**

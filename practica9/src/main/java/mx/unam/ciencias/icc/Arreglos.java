@@ -28,7 +28,13 @@ public class Arreglos {
      */
     public static <T> void
     selectionSort(T[] arreglo, Comparator<T> comparador) {
-        // Aquí va su código.
+        for (int i = 0; i < arreglo.length; i++) {
+            int minimo = i;
+            for (int j = i + 1; j < arreglo.length; j++)
+                if (comparador.compare(arreglo[j], arreglo[minimo]) < 0)
+                    minimo = j;
+            intercambia(arreglo, i, minimo);
+        }
     }
 
     /**
@@ -49,7 +55,7 @@ public class Arreglos {
      */
     public static <T> void
     quickSort(T[] arreglo, Comparator<T> comparador) {
-        // Aquí va su código.
+        quickSort(arreglo, comparador, 0, arreglo.length - 1);
     }
 
     /**
@@ -76,6 +82,42 @@ public class Arreglos {
      */
     public static <T> int
     busquedaBinaria(T[] arreglo, T elemento, Comparator<T> comparador) {
-        // Aquí va su código.
+        int izquierda = 0, derecha = arreglo.length - 1;
+        while (izquierda <= derecha) {
+            int medio = izquierda + (derecha - izquierda) / 2;
+            int comparacion = comparador.compare(elemento, arreglo[medio]);
+            if (comparacion == 0)
+                return medio;
+            if (comparacion < 0)
+                derecha = medio - 1;
+            else
+                izquierda = medio + 1;
+        }
+        return -1;
+    }
+
+    private static <T> void quickSort(T[] arreglo, Comparator<T> comparador,
+                                      int inicio, int fin) {
+        if (inicio >= fin)
+            return;
+        T pivote = arreglo[inicio];
+        int i = inicio + 1, j = fin;
+        while (i <= j) {
+            if (comparador.compare(arreglo[i], pivote) <= 0)
+                i++;
+            else if (comparador.compare(arreglo[j], pivote) > 0)
+                j--;
+            else
+                intercambia(arreglo, i++, j--);
+        }
+        intercambia(arreglo, inicio, j);
+        quickSort(arreglo, comparador, inicio, j - 1);
+        quickSort(arreglo, comparador, j + 1, fin);
+    }
+
+    private static <T> void intercambia(T[] arreglo, int i, int j) {
+        T temporal = arreglo[i];
+        arreglo[i] = arreglo[j];
+        arreglo[j] = temporal;
     }
 }

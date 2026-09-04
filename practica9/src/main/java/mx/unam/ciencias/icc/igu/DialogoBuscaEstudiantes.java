@@ -64,6 +64,6 @@ public class DialogoBuscaEstudiantes extends Stage {
      * @return el valor ingresado.
      */
     public Object getValor() {
-        // Aquí va su código.
+        return controlador.getValor();
     }
 }

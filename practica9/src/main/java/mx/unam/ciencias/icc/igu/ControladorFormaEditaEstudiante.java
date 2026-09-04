@@ -127,7 +127,8 @@ public class ControladorFormaEditaEstudiante
      *         otro caso.
      */
     @Override protected boolean verificaPromedio(String promedio) {
-        // Aquí va su código.
+        return super.verificaPromedio(promedio) &&
+            this.promedio >= 0.0 && this.promedio <= 10.0;
     }
 
     /**

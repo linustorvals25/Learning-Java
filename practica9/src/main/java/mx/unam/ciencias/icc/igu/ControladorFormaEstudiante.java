@@ -107,7 +107,14 @@ public abstract class ControladorFormaEstudiante {
      *         otro caso.
      */
     protected boolean verificaPromedio(String promedio) {
-        // Aquí va su código.
+        if (promedio == null || promedio.isEmpty())
+            return false;
+        try {
+            this.promedio = Double.parseDouble(promedio);
+        } catch (NumberFormatException nfe) {
+            return false;
+        }
+        return true;
     }
 
     /**

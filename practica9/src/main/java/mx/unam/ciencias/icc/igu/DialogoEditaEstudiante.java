@@ -61,7 +61,7 @@ public class DialogoEditaEstudiante extends Stage {
      *         <code>false</code> en otro caso.
      */
     public boolean isAceptado() {
-        // Aquí va su código.
+        return controlador.isAceptado();
     }
 
     /**
