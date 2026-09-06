@@ -32,7 +32,8 @@ public abstract class BaseDeDatos<R extends Registro<R, C>, C extends Enum> {
      * Constructor único.
      */
     public BaseDeDatos() {
-        // Aquí va su código.
+        registros = new Lista<>();
+        escuchas = new Lista<>();
     }
 
     /**
@@ -40,7 +41,7 @@ public abstract class BaseDeDatos<R extends Registro<R, C>, C extends Enum> {
      * @return el número de registros en la base de datos.
      */
     public int getNumRegistros() {
-        // Aquí va su código.
+        return registros.getLongitud();
     }
 
     /**
@@ -49,7 +50,7 @@ public abstract class BaseDeDatos<R extends Registro<R, C>, C extends Enum> {
      * @return una lista con los registros en la base de datos.
      */
     public Lista<R> getRegistros() {
-        // Aquí va su código.
+        registros.copia();
     }
 
     /**
@@ -59,7 +60,8 @@ public abstract class BaseDeDatos<R extends Registro<R, C>, C extends Enum> {
      * @param registro el registro que hay que agregar a la base de datos.
      */
     public void agregaRegistro(R registro) {
-        // Aquí va su código.
+        registros.agregaFinal(registro);
+        notifica(EventoBaseDeDatos.REGISTRO_AGREGADO, registro, registro);   
     }
 
     /**
@@ -69,7 +71,8 @@ public abstract class BaseDeDatos<R extends Registro<R, C>, C extends Enum> {
      * @param registro el registro que hay que eliminar de la base de datos.
      */
     public void eliminaRegistro(R registro) {
-        // Aquí va su código.
+        registros.elimina(registro);
+        notifica(EventoBaseDeDatos.REGISTRO_ELIMINADO, registro, registro);
     }
 
     /**
@@ -86,7 +89,15 @@ public abstract class BaseDeDatos<R extends Registro<R, C>, C extends Enum> {
      *         <code>null</code>.
      */
     public void modificaRegistro(R registro1, R registro2) {
-        // Aquí va su código.
+        if (registro1 == null || registro2 == null)
+            throw new IllegalArgumentException();
+        for (R registro: registros) {
+            if (registro.equals(registro)) {
+                notifica(EventoBaseDeDatos.REGISTRO_MODIFICADO, registro1, registro2);
+                registro1.actualiza(registro2);
+                return ;
+            }
+        }
     }
 
     /**
@@ -95,7 +106,8 @@ public abstract class BaseDeDatos<R extends Registro<R, C>, C extends Enum> {
      * EventoBaseDeDatos#BASE_LIMPIADA}
      */
     public void limpia() {
-        // Aquí va su código.
+        registros.limpia();
+        notifica(EventoBaseDeDatos.BASE_LIMPIADA, null, null);registros.elimina(registro);
     }
 
     /**
@@ -104,7 +116,8 @@ public abstract class BaseDeDatos<R extends Registro<R, C>, C extends Enum> {
      * @throws IOException si ocurre un error de entrada/salida.
      */
     public void guarda(BufferedWriter out) throws IOException {
-        // Aquí va su código.
+        for (R registro: registros)
+            out.append(registro.seria());
     }
 
     /**
@@ -119,7 +132,19 @@ public abstract class BaseDeDatos<R extends Registro<R, C>, C extends Enum> {
      * @throws IOException si ocurre un error de entrada/salida.
      */
     public void carga(BufferedReader in) throws IOException {
-        // Aquí va su código.
+        limpia();
+        notifica(EventoBaseDeDatos.BASE_LIMPIADA, null, null);
+        String linea;
+        while ((linea = in.readLine()) != null) {
+            R registro = creaRegistro();
+            try { 
+                registro.deseria(linea);
+            } catch (ExcepcionLineaInvalida eli) {
+                return;
+            }
+            registros.agregaFinal(registro);
+            notifica(EventoBaseDeDatos.REGISTRO_AGREGADO, registro, registro);
+        }
     }
 
     /**
@@ -132,7 +157,13 @@ public abstract class BaseDeDatos<R extends Registro<R, C>, C extends Enum> {
      *         correcta.
      */
     public Lista<R> buscaRegistros(C campo, Object valor) {
-        // Aquí va su código.
+        if (campo == null)
+            throw new IllegalArgumentException();
+        Lista<R> busqueda = new Lista<>();
+        for (R registro: registros) 
+            if (registro.casa(campo, valor))
+                busqueda.agregaFinal(registro);
+        return registros;
     }
 
     /**
@@ -146,7 +177,7 @@ public abstract class BaseDeDatos<R extends Registro<R, C>, C extends Enum> {
      * @param escucha el escucha a agregar.
      */
     public void agregaEscucha(EscuchaBaseDeDatos<R> escucha) {
-        // Aquí va su código.
+        escuchas.agregaFinal(escucha);
     }
 
     /**
@@ -154,6 +185,14 @@ public abstract class BaseDeDatos<R extends Registro<R, C>, C extends Enum> {
      * @param escucha el escucha a eliminar.
      */
     public void eliminaEscucha(EscuchaBaseDeDatos<R> escucha) {
-        // Aquí va su código.
+        escuchas.elimina(escucha);
+    }
+
+    /**
+     * 
+     */
+    private  void notifica(EventoBaseDeDatos evento, R registro1, R registro2) {
+        for (EscuchaBaseDeDatos<R> escucha : escuchas) 
+            escucha.baseDeDatosModificada(evento, registro1, registro2);
     }
 }
